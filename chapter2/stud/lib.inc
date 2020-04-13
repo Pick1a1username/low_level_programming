@@ -1,7 +1,7 @@
 section .text
 
 ; the string will be passed to rdi.
-; the length should be saved to rax?
+; the length should be saved to rax.
 string_length:
     xor rax, rax
 .loop:                   ; main loop starts here
@@ -21,6 +21,22 @@ string_length:
 
 print_string:
     xor rax, rax
+
+; most of codes are copied from hello.asm
+  push rax
+  call string_length
+  mov  rdx, rax       ;argument #3 in rdx: how many bytes to write
+  mov  rsi, rdi  ;argument #2 in rsi: where does the string start
+  push rdi
+  mov  rdi, 1        ;argument #1 in rdi: where to write (descriptor)?
+  mov  rax, 1        ;system call number should be stored in rax
+  push rcx
+  syscall            ;this instruction invokes a system call
+  pop rcx
+  pop rdi
+  pop rax
+
+
     ret
 
 
