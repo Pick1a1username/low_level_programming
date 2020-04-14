@@ -1,5 +1,9 @@
-section .text
+section .data
+arg1: db 'ashdb asdhabs dahb', 0
+arg2: times 19 db  66
 
+section .text
+; %include "lib.inc"
 ; the string will be passed to rdi.
 ; the length should be saved to rax.
 string_length:
@@ -39,63 +43,6 @@ print_string:
 
     ret
 
-; WIP
-print_char:
-    xor rax, rax
-
-    ; most of codes are copied from hello.asm
-    call string_length
-    mov  rdx, 1       ;argument #3 in rdx: how many bytes to write
-    mov  rsi, rdi  ;argument #2 in rsi: where does the string start
-    push rdi
-    mov  rdi, 1        ;argument #1 in rdi: where to write (descriptor)?
-    mov  rax, 1        ;system call number should be stored in rax
-    push rcx           ; syscall will break rcx
-    syscall            ;this instruction invokes a system call
-    pop rcx
-    pop rdi
-
-    ret
-
-print_newline:
-    xor rax, rax
-    ret
-
-
-print_uint:
-    xor rax, rax
-    ret
-
-
-print_int:
-    xor rax, rax
-    ret
-
-string_equals:
-    xor rax, rax
-    ret
-
-
-read_char:
-    xor rax, rax
-    ret 
-
-read_word:
-    ret
-
-; rdi points to a string
-; returns rax: number, rdx : length
-parse_uint:
-    xor rax, rax
-    ret
-
-; rdi points to a string
-; returns rax: number, rdx : length
-parse_int:
-    xor rax, rax
-    ret 
-
-
 ; rdi: string
 ; rsi: buffer
 ; rdx: buffer's length
@@ -124,37 +71,87 @@ string_copy:
     lea rax, [rsi]
 
     ret
-    
+
     ; rdi = source
     ; rsi = dest
-    ; rdx = dest length 
-; string_copy:
-; 
-;     push rdi
-;     push rsi
-;     push rdx
-;     call string_length
-;     pop rdx
-;     pop rsi
-;     pop rdi
-; 
-;     cmp rax, rdx
-;     jae .too_long  ; we also need to store null-terminator
-;     
-;     push rsi 
-; 
-;     ; rdx edx dx dh dl
-;         .loop: 
-;         mov dl, byte[rdi]
-;         mov byte[rsi], dl
-;         inc rdi
-;         inc rsi
-;         test dl, dl
-;         jnz .loop 
-; 
-;     pop rax 
-;     ret
-; 
-;     .too_long:
-;     xor rax, rax
-;     ret
+    ; rdx = dest length
+
+
+global _start 
+_start:
+; before_call
+mov rdi, -1
+mov rsi, -1
+mov rax, -1
+mov rcx, -1
+mov rdx, -1
+mov r8, -1
+mov r9, -1
+mov r10, -1
+mov r11, -1
+push rbx
+push rbp
+push r12
+push r13
+push r14
+push r15
+; before_call(end)
+
+push rdi
+push rsi
+push rdx
+
+mov rdi, arg1
+mov rsi, arg2
+mov rdx, 19
+;call string_copy
+
+pop rdi
+pop rsi
+pop rdx
+
+; after_call
+cmp r15, [rsp]
+jne .convention_error
+pop r15
+cmp r14, [rsp]
+jne .convention_error
+pop r14
+cmp r13, [rsp]
+jne .convention_error
+pop r13
+cmp r12, [rsp]
+jne .convention_error
+pop r12
+cmp rbp, [rsp]
+jne .convention_error
+pop rbp
+cmp rbx, [rsp]
+jne .convention_error
+pop rbx
+
+jmp continue
+
+.convention_error:
+    mov rax, 1
+    mov rdi, 2
+    mov rsi, err_calling_convention
+    mov rdx, err_calling_convention.end - err_calling_convention
+    syscall
+    mov rax, 60
+    mov rdi, -41
+    syscall
+
+section .data
+err_calling_convention: db "You did not respect the calling convention! Check that you handled caller-saved and callee-saved registers correctly", 10
+
+.end:
+section .text
+continue:
+; after_call(end)
+
+mov rdi, arg2 
+call print_string
+mov rax, 60
+xor rdi, rdi
+syscall
