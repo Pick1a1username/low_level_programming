@@ -1,8 +1,24 @@
- section .text
-        %include "lib.inc"
-        global _start 
-        _start:
-        
+section .text
+; %include "lib.inc"
+print_uint:
+  xor rax, rax
+  push rax
+  push rbx
+  push rdi
+  mov rax, rdi
+  ; mov rbx, 2
+  ; div rbx
+  ; https://www.tutorialspoint.com/assembly_programming/assembly_arithmetic_instructions.htm
+  mov bl, 2
+  div bl
+  pop rdi
+  pop rbx
+  pop rax
+  ret
+
+global _start 
+_start:
+; before_call
 mov rdi, -1
 mov rsi, -1
 mov rax, -1
@@ -14,30 +30,32 @@ mov r10, -1
 mov r11, -1
 push rbx
 push rbp
-push r12 
-push r13 
-push r14 
-push r15 
+push r12
+push r13
+push r14
+push r15
+; before_call(end)
 
-        mov rdi, 'c'
-        call print_char
-        
-cmp r15, [rsp] 
+mov rdi, 122
+call print_uint
+
+; after_call
+cmp r15, [rsp]
 jne .convention_error
 pop r15
-cmp r14, [rsp] 
+cmp r14, [rsp]
 jne .convention_error
 pop r14
-cmp r13, [rsp] 
+cmp r13, [rsp]
 jne .convention_error
 pop r13
-cmp r12, [rsp] 
+cmp r12, [rsp]
 jne .convention_error
 pop r12
-cmp rbp, [rsp] 
+cmp rbp, [rsp]
 jne .convention_error
 pop rbp
-cmp rbx, [rsp] 
+cmp rbx, [rsp]
 jne .convention_error
 pop rbx
 
@@ -47,17 +65,21 @@ jmp continue
     mov rax, 1
     mov rdi, 2
     mov rsi, err_calling_convention
-    mov rdx,  err_calling_convention.end - err_calling_convention
+    mov rdx, err_calling_convention.end - err_calling_convention
     syscall
     mov rax, 60
     mov rdi, -41
     syscall
+
 section .data
 err_calling_convention: db "You did not respect the calling convention! Check that you handled caller-saved and callee-saved registers correctly", 10
+
 .end:
 section .text
 continue:
+; after_call(end)
 
-        mov rax, 60
-        xor rdi, rdi
-        syscall
+mov rax, 60
+xor rdi, rdi
+syscall
+

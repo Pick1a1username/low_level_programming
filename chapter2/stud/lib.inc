@@ -54,6 +54,7 @@ print_string:
 ;     ret
 
 print_char:
+    xor rax, rax
     push rdi
     mov rdi, rsp
     call print_string
@@ -61,6 +62,8 @@ print_char:
 
 print_newline:
     xor rax, rax
+    mov rdi, 0xA
+    call print_char
     ret
 
 
