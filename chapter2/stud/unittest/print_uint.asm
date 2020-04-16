@@ -64,24 +64,26 @@ print_uint:
   push rax
   push rbx
   push rdi
+  push rdx
+
   mov rax, rdi
-  mov bl, 10 ; divider
-  ; mov rbx, 10
+  mov rbx, 10 ; divider
   ; mov r12, 0
   .loop_get_decimal_digits:
-  mov ah, 0 ; reset remainder
+  mov rdx, 0 ; reset remainder
   ; https://www.tutorialspoint.com/assembly_programming/assembly_arithmetic_instructions.htm
-  div bl
-  ; div rbx <- Floating point exception (core dumped)
-  ; quotient is stored in al
-  ; remainder is stored in ah
-  mov [rsi], ah ; copy the digit to the buffer
+  div rbx ; <- Floating point exception (core dumped)
+  ; quotient is stored in rax
+  ; remainder is stored in rdx
+  ; mov [rsi], al ; copy the digit to the buffer
+  mov [rsi], rdx; copy the digit to the buffer
   inc rsi
-  ; cmp 0, al   <- This doesn't work!
-  cmp al, 0
+  cmp rax, 0
   je .print_uint_print_digits
   jmp .loop_get_decimal_digits
+
   .print_uint_print_digits:
+  pop rdx
   pop rdi
   pop rbx
   pop rax
@@ -177,14 +179,9 @@ push r14
 push r15
 ; before_call(end)
 
-; mov rdi, 65536 <- infinite loop
-; mov rdi, 128 ; <- OK
-; mov rdi, 192 ; <- OK
-mov rdi, 255 ; <- OK
-; mov rdi, 0 <- infinite loop
-; mov rdi, 1024 <- infinite loop
-; mov rdi, 512  <- infinite loop
-; mov rdi, 256  <- infinite loop
+mov rdi, 65536 ; <- OK
+; mov rdi, 4294967296 ; <- Illegal instruction (core dumped)
+; mov rdi, 4294967295 ; <- Illegal instruction (core dumped)
 call print_uint
 
 ; after_call
