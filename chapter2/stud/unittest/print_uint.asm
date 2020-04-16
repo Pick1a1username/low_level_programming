@@ -95,6 +95,7 @@ print_uint:
 
   ; mov rbx, [r11] <- This doesn't work..(segmentation fault)
   ; lea rbx, [r11]
+  
 
   mov rcx, 64   ; for shifting the register storing digits
   mov r12, 0    ; 0 if digit is not started?
@@ -176,8 +177,14 @@ push r14
 push r15
 ; before_call(end)
 
-; mov rdi, 65536
-mov rdi, 128
+; mov rdi, 65536 <- infinite loop
+; mov rdi, 128 ; <- OK
+; mov rdi, 192 ; <- OK
+mov rdi, 255 ; <- OK
+; mov rdi, 0 <- infinite loop
+; mov rdi, 1024 <- infinite loop
+; mov rdi, 512  <- infinite loop
+; mov rdi, 256  <- infinite loop
 call print_uint
 
 ; after_call
