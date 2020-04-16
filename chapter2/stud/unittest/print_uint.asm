@@ -2,15 +2,26 @@ section .text
 ; %include "lib.inc"
 print_uint:
   xor rax, rax
+  ; Create a buffer
+  mov r11, 0x0000000000000000
+  push r11
+  mov r11, rsp
   push rax
   push rbx
   push rdi
   mov rax, rdi
-  ; mov rbx, 2
-  ; div rbx
+  mov bl, 10
+  ; mov rbx, 10
+  .loop_get_decimal_digits:
+  mov ah, 0
   ; https://www.tutorialspoint.com/assembly_programming/assembly_arithmetic_instructions.htm
-  mov bl, 2
   div bl
+  ; div rbx <- Floating point exception (core dumped)
+  ; quotient is stored in al
+  ; remainder is stored in ah
+  ; cmp 0, al   <- This doesn't work!
+  cmp al, 0
+  jne .loop_get_decimal_digits
   pop rdi
   pop rbx
   pop rax
@@ -36,7 +47,8 @@ push r14
 push r15
 ; before_call(end)
 
-mov rdi, 122
+; mov rdi, 65536
+mov rdi, 128
 call print_uint
 
 ; after_call
