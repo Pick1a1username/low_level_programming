@@ -48,6 +48,12 @@ print_char:
     pop rdi
     ret
 
+print_newline:
+    xor rax, rax
+    mov rdi, 0xA
+    call print_char
+    ret
+
 print_uint:
   xor rax, rax
   push rsi
@@ -85,11 +91,21 @@ print_uint:
   push rdi
   push rbx
   push rcx
+  push r12
 
   ; mov rbx, [r11] <- This doesn't work..(segmentation fault)
   ; lea rbx, [r11]
 
-  mov rcx, 64
+  mov rcx, 64   ; for shifting the register storing digits
+  mov r12, 0    ; 0 if digit is not started?
+  
+  jmp .loop_print_digits
+  .pre_loop_print_digits:
+  pop rdx
+  pop rdi
+  pop r11
+  pop rax
+
   .loop_print_digits:
   push rax
   push r11
@@ -99,11 +115,22 @@ print_uint:
   sub rcx, 8
   sar r11, cl
   and r11, 0xff
+
+  ; if it's digit, start to print
+  cmp r12, 0
+  jne .start_print
+
+  ; if...
+  cmp r11, 0 
+  je .pre_loop_print_digits
+  mov r12, 1
+
+  .start_print:
   mov rsi, 0x30
   add rsi, r11
+
   push rsi
   mov rsi, rsp  ; argument #2 in rsi: where does the string start
-
   mov rdx, 1  ; argument #3 in rdx: how many bytes to write
   mov rax, 1  ; system call number should be stored in rax
   mov rdi, 1  ; argument #1 in rdi: where to write (descriptor)?
@@ -119,6 +146,10 @@ print_uint:
 
   test rcx, rcx
   jnz .loop_print_digits
+  
+  call print_newline
+
+  pop r12
   pop rcx
   pop rbx
   pop rdi
