@@ -59,6 +59,7 @@ print_char:
     mov rdi, rsp
     call print_string
     pop rdi
+    ret
 
 print_newline:
     xor rax, rax
@@ -68,8 +69,100 @@ print_newline:
 
 
 print_uint:
-    xor rax, rax
-    ret
+  xor rax, rax
+  push rsi
+  ; Create a buffer
+  mov r11, 0x0000000000000000
+  push r11
+  push r11
+  push r11
+  mov rsi, rsp
+  push rax
+  push rbx
+  push rdi
+  push rdx
+
+  mov rax, rdi
+  mov rbx, 10 ; divider
+  ; mov r12, 0
+.loop_get_decimal_digits:
+  mov rdx, 0 ; reset remainder
+  ; https://www.tutorialspoint.com/assembly_programming/assembly_arithmetic_instructions.htm
+  div rbx ; <- Floating point exception (core dumped)
+  ; quotient is stored in rax
+  ; remainder is stored in rdx
+  ; mov [rsi], al ; copy the digit to the buffer
+  mov [rsi], rdx; copy the digit to the buffer
+  inc rsi
+  cmp rax, 0
+  je .print_uint_print_digits
+  jmp .loop_get_decimal_digits
+
+.print_uint_print_digits:
+  pop rdx
+  pop rdi
+  pop rbx
+  pop rax
+  pop r11
+  pop r13
+  pop r14
+  pop rsi
+
+
+  push rbx; this will be used for the address storing a digit
+
+  ; push digits to stack again
+  push r14
+  push r13
+  push r11
+  ; get the address of the beginning of the pushed digits
+  mov rbx, rsp 
+  add rbx, 24
+
+  ; get the address of the beginning of the digits(the first non-zero digit)
+.loop_find_non_zero:
+  cmp byte[rbx], 0    ; if the digit is not zero, start to print
+  jne .start_print_digits
+  dec rbx
+  jmp .loop_find_non_zero
+
+  ; start to print.
+.start_print_digits:
+  
+
+
+
+  ; get the 
+  ; .r11_start_print:
+  ; mov rsi, 0x30
+  ; add rsi, r11
+
+  ; push rsi
+  ; mov rsi, rsp  ; argument #2 in rsi: where does the string start
+  ; mov rdx, 1  ; argument #3 in rdx: how many bytes to write
+  ; mov rax, 1  ; system call number should be stored in rax
+  ; mov rdi, 1  ; argument #1 in rdi: where to write (descriptor)?
+  ; push rcx
+  ; syscall
+  ; pop rcx
+  ; pop rsi
+
+  ; pop rdx
+  ; pop rdi
+  ; pop r11
+  ; pop rax
+
+  ; test rcx, rcx
+  ; jnz .r11_loop_print_digits
+  ; ;;;;;;;;;;;; r11 end
+  .end_of_check_registers:
+
+  call print_newline
+
+  pop rbx
+
+  ret
+
 
 
 print_int:
