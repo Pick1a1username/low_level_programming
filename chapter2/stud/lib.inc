@@ -117,48 +117,42 @@ print_uint:
   push r11
   ; get the address of the beginning of the pushed digits
   mov rbx, rsp 
+  mov r12, rsp ; get the one more address of the beginning of the pushed digits
   add rbx, 24
 
   ; get the address of the beginning of the digits(the first non-zero digit)
 .loop_find_non_zero:
   cmp byte[rbx], 0    ; if the digit is not zero, start to print
-  jne .start_print_digits
+  jne .loop_print_digits
   dec rbx
   jmp .loop_find_non_zero
 
   ; start to print.
-.start_print_digits:
-  
+.loop_print_digits:
+  mov si, 0x30
+  add si, word[rbx]
+
+  push rsi
+  mov rsi, rsp  ; argument #2 in rsi: where does the string start
+  mov rdx, 1  ; argument #3 in rdx: how many bytes to write
+  mov rax, 1  ; system call number should be stored in rax
+  mov rdi, 1  ; argument #1 in rdi: where to write (descriptor)?
+  push rcx
+  syscall
+  pop rcx
+  pop rsi
+
+  cmp rbx, r12
+  je .finish_print_digits
+  dec rbx
+  jmp .loop_print_digits
 
 
-
-  ; get the 
-  ; .r11_start_print:
-  ; mov rsi, 0x30
-  ; add rsi, r11
-
-  ; push rsi
-  ; mov rsi, rsp  ; argument #2 in rsi: where does the string start
-  ; mov rdx, 1  ; argument #3 in rdx: how many bytes to write
-  ; mov rax, 1  ; system call number should be stored in rax
-  ; mov rdi, 1  ; argument #1 in rdi: where to write (descriptor)?
-  ; push rcx
-  ; syscall
-  ; pop rcx
-  ; pop rsi
-
-  ; pop rdx
-  ; pop rdi
-  ; pop r11
-  ; pop rax
-
-  ; test rcx, rcx
-  ; jnz .r11_loop_print_digits
-  ; ;;;;;;;;;;;; r11 end
-  .end_of_check_registers:
-
-  call print_newline
-
+  .finish_print_digits:
+  pop rbx
+  pop r11
+  pop r13
+  pop r14
   pop rbx
 
   ret
