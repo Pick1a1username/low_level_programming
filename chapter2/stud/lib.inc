@@ -70,6 +70,18 @@ print_newline:
 
 print_uint:
   xor rax, rax
+
+  ; if the number is zero, print it immediately.
+  cmp rdi, 0
+  jne .non_zero_uint
+  mov rdi, 0x30
+  push rdi
+  mov rdi, rsp
+  call print_string
+  pop rdi
+  ret
+
+.non_zero_uint:
   push rsi
   ; Create a buffer
   mov r11, 0x0000000000000000
@@ -160,8 +172,105 @@ print_uint:
 
 
 print_int:
-    xor rax, rax
-    ret
+  xor rax, rax
+
+  ; if the number is zero, print it immediately.
+  cmp rdi, 0
+  jne .print_int_non_zero_uint
+  mov rdi, 0x30
+  push rdi
+  mov rdi, rsp
+  call print_string
+  pop rdi
+  ret
+
+.print_int_non_zero_uint:
+  push rsi
+  ; Create a buffer
+  mov r11, 0x0000000000000000
+  push r11
+  push r11
+  push r11
+  mov rsi, rsp
+  push rax
+  push rbx
+  push rdi
+  push rdx
+
+  mov rax, rdi
+  mov rbx, 10 ; divider
+  ; mov r12, 0
+.print_int_loop_get_decimal_digits:
+  mov rdx, 0 ; reset remainder
+  ; https://www.tutorialspoint.com/assembly_programming/assembly_arithmetic_instructions.htm
+  div rbx ; <- Floating point exception (core dumped)
+  ; quotient is stored in rax
+  ; remainder is stored in rdx
+  ; mov [rsi], al ; copy the digit to the buffer
+  mov [rsi], rdx; copy the digit to the buffer
+  inc rsi
+  cmp rax, 0
+  je .print_int_print_digits
+  jmp .print_int_loop_get_decimal_digits
+
+.print_int_print_digits:
+  pop rdx
+  pop rdi
+  pop rbx
+  pop rax
+  pop r11
+  pop r13
+  pop r14
+  pop rsi
+
+
+  push rbx; this will be used for the address storing a digit
+
+  ; push digits to stack again
+  push r14
+  push r13
+  push r11
+  ; get the address of the beginning of the pushed digits
+  mov rbx, rsp 
+  mov r12, rsp ; get the one more address of the beginning of the pushed digits
+  add rbx, 24
+
+  ; get the address of the beginning of the digits(the first non-zero digit)
+.print_int_loop_find_non_zero:
+  cmp byte[rbx], 0    ; if the digit is not zero, start to print
+  jne .print_int_loop_print_digits
+  dec rbx
+  jmp .print_int_loop_find_non_zero
+
+  ; start to print.
+.print_int_loop_print_digits:
+  mov si, 0x30
+  add si, word[rbx]
+
+  push rsi
+  mov rsi, rsp  ; argument #2 in rsi: where does the string start
+  mov rdx, 1  ; argument #3 in rdx: how many bytes to write
+  mov rax, 1  ; system call number should be stored in rax
+  mov rdi, 1  ; argument #1 in rdi: where to write (descriptor)?
+  push rcx
+  syscall
+  pop rcx
+  pop rsi
+
+  cmp rbx, r12
+  je .print_int_finish_print_digits
+  dec rbx
+  jmp .print_int_loop_print_digits
+
+
+.print_int_finish_print_digits:
+  pop rbx
+  pop r11
+  pop r13
+  pop r14
+  pop rbx
+
+  ret
 
 string_equals:
     xor rax, rax
