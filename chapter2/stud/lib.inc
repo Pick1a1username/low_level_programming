@@ -174,6 +174,13 @@ print_uint:
 print_int:
   xor rax, rax
 
+  ; Get the sign
+  push rdi
+  shr rdi, 63
+  mov r15, rdi  ; r15 will hold the sign.
+  pop rdi
+  
+
   ; if the number is zero, print it immediately.
   cmp rdi, 0
   jne .print_int_non_zero_uint
@@ -197,9 +204,14 @@ print_int:
   push rdi
   push rdx
 
-  mov rax, rdi
+  ; divide the number by 10...
   mov rbx, 10 ; divider
-  ; mov r12, 0
+  mov rax, rdi
+  ; if the number is negative, remove sign and convert to positive.
+  cmp r15, 0
+  je .print_int_loop_get_decimal_digits
+  not rax
+  add rax, 1
 .print_int_loop_get_decimal_digits:
   mov rdx, 0 ; reset remainder
   ; https://www.tutorialspoint.com/assembly_programming/assembly_arithmetic_instructions.htm
@@ -230,11 +242,27 @@ print_int:
   push r14
   push r13
   push r11
+
+  
+
+
   ; get the address of the beginning of the pushed digits
   mov rbx, rsp 
   mov r12, rsp ; get the one more address of the beginning of the pushed digits
   add rbx, 24
 
+  ; Print '-' at first if it's negative
+  cmp r15, 0
+  je .print_int_loop_find_non_zero
+
+  push rdi
+  mov rdi, 0x2d
+  push rdi
+  mov rdi, rsp
+  call print_string
+  pop rdi
+  pop rdi
+  
   ; get the address of the beginning of the digits(the first non-zero digit)
 .print_int_loop_find_non_zero:
   cmp byte[rbx], 0    ; if the digit is not zero, start to print
