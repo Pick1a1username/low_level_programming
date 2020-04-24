@@ -13,6 +13,19 @@ string_length:
                          ; hence we don't know how many bytes should be
                          ; taken from memory and compared to zero.
   je   .end              ; Jump if we found null-terminator
+  ; cmp byte [rdi+rax], 0x20 ; space
+  ; je   .end
+  cmp byte [rdi+rax], 0x9  ; tab 
+  je   .end
+  cmp byte [rdi+rax], 0x10 ; line break
+  je   .end
+  cmp byte [rdi+rax], 0x0a ; line break
+  je   .end
+  cmp byte [rdi+rax], 0x0d ; line break
+  je   .end
+  cmp byte [rdi+rax], 0xca ; I have no idea why this check should be added...
+  je   .end
+  
   inc  rax               ; Otherwise go to next symbol and increase
                          ; counter
   jmp .loop
@@ -305,11 +318,52 @@ string_equals:
     ret
 
 
+; read_char:
+;     xor rax, rax
+;     mov  rdx, 2       ;argument #3 in rdx: how many bytes to read
+;     mov  rsi, 2  ;argument #2 in rsi: buffer
+;     push rdi
+;     mov  rdi, 0        ;argument #1 in rdi: where to read (descriptor)?
+;     mov  rax, 0        ;system call number should be stored in rax
+;     push rcx           ; syscall will break rcx
+;     syscall            ;this instruction invokes a system call
+;     pop rcx
+;     pop rdi
+;     ret 
 read_char:
+    push 0
     xor rax, rax
+    xor rdi, rdi
+    mov rsi, rsp 
+    mov rdx, 1
+    syscall
+    pop rax
     ret 
 
+; arguments
+; rdi: buffer
+; rsi: size
 read_word:
+   
+    push rdi
+    push rsi
+    push rdx
+    push rcx
+    
+    ; mov dword[rdi], 0x0000000000000000
+
+    mov rdx, rsi ; argument #3; how many bytes to read
+    mov rsi, rdi ; argument #2: buffer
+    xor rax, rax
+    xor rdi, rdi ; argument #1; where to read (descriptor)
+    syscall
+
+    mov rax, rsi
+
+    pop rcx
+    pop rdx
+    pop rsi
+    pop rdi
     ret
 
 ; rdi points to a string
