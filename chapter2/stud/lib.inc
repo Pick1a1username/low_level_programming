@@ -15,16 +15,16 @@ string_length:
   je   .end              ; Jump if we found null-terminator
   ; cmp byte [rdi+rax], 0x20 ; space
   ; je   .end
-  cmp byte [rdi+rax], 0x9  ; tab 
-  je   .end
-  cmp byte [rdi+rax], 0x10 ; line break
-  je   .end
-  cmp byte [rdi+rax], 0x0a ; line break
-  je   .end
-  cmp byte [rdi+rax], 0x0d ; line break
-  je   .end
-  cmp byte [rdi+rax], 0xca ; I have no idea why this check should be added...
-  je   .end
+  ; cmp byte [rdi+rax], 0x9  ; tab 
+  ; je   .end
+  ; cmp byte [rdi+rax], 0x10 ; line break
+  ; je   .end
+  ; cmp byte [rdi+rax], 0x0a ; line break
+  ; je   .end
+  ; cmp byte [rdi+rax], 0x0d ; line break
+  ; je   .end
+  ; cmp byte [rdi+rax], 0xca ; I have no idea why this check should be added...
+  ; je   .end
   
   inc  rax               ; Otherwise go to next symbol and increase
                          ; counter
@@ -332,38 +332,130 @@ string_equals:
 ;     ret 
 read_char:
     push 0
-    xor rax, rax
-    xor rdi, rdi
-    mov rsi, rsp 
-    mov rdx, 1
+    xor rax, rax  ; system call number.
+    xor rdi, rdi  ; argument #1: where to read (descriptor)?
+    mov rsi, rsp  ; argument #2: buffer's address
+    mov rdx, 1    ; argument #3: how many bytes to read.
     syscall
     pop rax
     ret 
 
 ; arguments
-; rdi: buffer
+; rdi: buffer's address
 ; rsi: size
+; returns
+; rax; buffer's address
+; rdx; the number of characters?
+; read_word:
+;    
+;     ; read word
+;     push rdi
+;     push rsi
+;     push rdx
+;     push rcx
+;     
+;     ; mov dword[rdi], 0x0000000000000000
+; 
+;     mov rdx, rsi ; argument #3; how many bytes to read
+;     mov rsi, rdi ; argument #2: buffer
+;     xor rax, rax
+;     xor rdi, rdi ; argument #1; where to read (descriptor)
+;     syscall
+; 
+;     mov rax, rsi
+; 
+;     pop rcx
+;     pop rdx
+;     pop rsi
+;     pop rdi
+; 
+;     ; get the length of the word.
+;     push rax
+; 
+;     mov rdi, rax
+;     call string_length
+;     mov rdx, rax
+; 
+;     pop rax
+; 
+;     ret
+
+
+; this is the solution.
+; There had not been any comment.
+;
+; arguments
+; rdi: buffer's address
+; rsi: size
+; returns
+; rax; buffer's address
+; rdx; the number of characters. 
 read_word:
-   
+    push r14
+    push r15
+    xor r14, r14   ; Initialize r14 to 0.
+                   ; r14 is for the number of characters.
+                   ; And also it is used for ... address.
+    mov r15, rsi   ; r15 contains the size of buffer.
+    dec r15
+
+
+    ; Get user's input.
+    ; This is for removing the leading whitespaces/linebreaks/tabs.
+    .A: 
     push rdi
-    push rsi
-    push rdx
-    push rcx
-    
-    ; mov dword[rdi], 0x0000000000000000
-
-    mov rdx, rsi ; argument #3; how many bytes to read
-    mov rsi, rdi ; argument #2: buffer
-    xor rax, rax
-    xor rdi, rdi ; argument #1; where to read (descriptor)
-    syscall
-
-    mov rax, rsi
-
-    pop rcx
-    pop rdx
-    pop rsi
+    call read_char
     pop rdi
+    cmp al, ' ' ; is it whitespace?
+    je .A
+    cmp al, 10  ; is it line break?
+    je .A
+    cmp al, 13  ; is it line break(enter)???
+    je .A
+    cmp al, 9   ; is it tab
+    je .A
+    test al, al ; is it zero? is the input over?
+    jz .C
+
+
+    ; Get user's input after the user starts to type alphabet/number.
+    .B: 
+    mov byte [rdi + r14], al  ; save the character typed at the last time.
+    inc r14                   ; increment 
+
+    push rdi
+    call read_char ; Get a character.
+    pop rdi
+    cmp al, ' ' ; is it a whitespace?
+    je .C
+    cmp al, 10  ; is it a line break?
+    je .C
+    cmp al, 13  ; is it a line break(enter)???
+    je .C
+    cmp al, 9   ; is it a tab?
+    je .C
+    test al, al ; is it zero? is the input over?
+    jz .C
+    cmp r14, r15 ; is the buffer full?
+    je .D
+
+    jmp .B
+
+
+    ; Return the result when the input is over.
+    .C: 
+    mov byte [rdi + r14], 0 ; add null terminator.
+    mov rax, rdi  ; return the buffer's address at RAX.
+
+    mov rdx, r14  ; return the length of the word at RDX.
+    pop r15
+    pop r14
+    ret
+
+    .D:   ; Return the result when the buffer is full.
+    xor rax, rax
+    pop r15
+    pop r14
     ret
 
 ; rdi points to a string
