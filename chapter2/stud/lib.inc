@@ -550,6 +550,11 @@ parse_uint:
 
     pop rdx
 
+    ; clear stacks for buffer.
+    pop r15
+    pop r15
+    pop r15
+
     pop r13
     pop r14
     pop r15
