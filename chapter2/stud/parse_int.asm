@@ -1,5 +1,5 @@
 section .data
-        input: db '1', 0
+        input: db '0', 0
         section .text
         %include "lib.inc"
         global _start 
@@ -22,7 +22,7 @@ push r14
 push r15 
 
         mov rdi, input
-        call parse_uint
+        call parse_int
         
 cmp r15, [rsp] 
 jne .convention_error
@@ -62,7 +62,7 @@ continue:
 
         push rdx
         mov rdi, rax
-        call print_uint
-        mov rax, 60
+        call print_int
         pop rdi
+        mov rax, 60
         syscall

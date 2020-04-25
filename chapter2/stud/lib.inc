@@ -128,9 +128,10 @@ print_uint:
   pop rdi
   pop rbx
   pop rax
-  pop r11
-  pop r13
-  pop r14
+  pop r11 ; clean buffer
+  pop r13 ; clean buffer
+  pop r14 ; clean buffer
+  ; xor r11, r11 ; clean buffer
   pop rsi
 
 
@@ -174,7 +175,7 @@ print_uint:
 
 
   .finish_print_digits:
-  pop rbx
+  ; pop rbx
   pop r11
   pop r13
   pop r14
