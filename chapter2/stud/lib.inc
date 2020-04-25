@@ -462,6 +462,99 @@ read_word:
 ; returns rax: number, rdx : length
 parse_uint:
     xor rax, rax
+    
+    ; if the number is zero, print it immediately.
+    cmp word[rdi], 0x0030
+    jne .parse_uint_non_zero_uint
+    mov rax, 0
+    mov rdx, 1
+    ret
+
+    ; Get each character into number.
+    .parse_uint_non_zero_uint:
+    push rsi
+    push r15
+    push r14
+    push r13
+    xor r15, r15  ; r15 will be used as counter
+    xor r14, r14  ; r14 will be used as temporary store for digit
+    xor r13, r13  ; r13 will be used as another counter
+
+    ; create buffer
+    push 0
+    push 0
+    push 0
+    mov rsi, rsp
+
+    .parse_uint_loop_save_digit_start:
+    ; save each digit to the buffer.
+    mov r14, [rdi+r13]
+    and r14, 0x00000000000000FF
+
+    ; if null-termination, return.
+    test r14, r14
+    jz .parse_uint_get_number
+
+    ; Ignore non-digit character.
+    cmp r14, 0x30
+    jb .parse_uint_loop_save_digit_inc_counter
+    cmp r14, 0x39
+    ja .parse_uint_loop_save_digit_inc_counter
+
+    ; save the digit to the buffer.
+    sub r14, 0x30
+    mov [rsi+r15], r14
+    inc r15
+
+    .parse_uint_loop_save_digit_inc_counter:
+    inc r13
+
+    jmp .parse_uint_loop_save_digit_start
+    
+
+    .parse_uint_get_number:
+    mov rdx, r15 ; get the length for return
+    ; xor r15, r15 ; reset r15
+    xor r14, r14 ; reset r14
+    mov r13, 1 ; reset r13
+
+    push rdx
+    dec r15
+
+    .parse_uint_loop_get_number:
+    push rax
+    mov rax, [rsi+r15] ; get a digit from right.
+    and rax, 0x00000000000000FF
+    mul r13 ; multiply...
+    mov r14, rax
+    pop rax
+
+    add rax, r14 ; add to...
+
+    test r15, r15
+    jz .parse_uint_return
+
+    dec r15
+
+    push rax
+    mov rax, r13
+    mov r13, 10
+    mul r13
+    mov r13, rax
+    pop rax
+
+    jmp .parse_uint_loop_get_number
+
+
+    .parse_uint_return:
+
+    pop rdx
+
+    pop r13
+    pop r14
+    pop r15
+    pop rsi
+
     ret
 
 ; rdi points to a string
