@@ -574,16 +574,19 @@ parse_int:
     mov rax, 0
     mov rdx, 1
     ret
-
+    
     ; Get each character into number.
     .parse_int_non_zero_int:
     push rsi
     push r15
     push r14
     push r13
+    push r12
     xor r15, r15  ; r15 will be used as counter
     xor r14, r14  ; r14 will be used as temporary store for digit
     xor r13, r13  ; r13 will be used as another counter
+    xor r12, r12  ; r12 will store the sign.
+                  ; 0 if it's positive, 1 if it's negative
 
     ; create buffer
     push 0
@@ -599,6 +602,10 @@ parse_int:
     ; if null-termination, return.
     test r14, r14
     jz .parse_int_get_number
+
+    ; check if there's negative sign.
+    cmp r14, 0x2d
+    je .parse_int_loop_save_sign
 
     ; Ignore non-digit character.
     cmp r14, 0x30
@@ -616,6 +623,10 @@ parse_int:
 
     jmp .parse_int_loop_save_digit_start
     
+    .parse_int_loop_save_sign:
+    mov r12, 1
+    jmp .parse_int_loop_save_digit_inc_counter
+
 
     .parse_int_get_number:
     mov rdx, r15 ; get the length for return
@@ -637,7 +648,7 @@ parse_int:
     add rax, r14 ; add to...
 
     test r15, r15
-    jz .parse_int_return
+    jz .parse_int_convert
 
     dec r15
 
@@ -651,6 +662,15 @@ parse_int:
     jmp .parse_int_loop_get_number
 
 
+    .parse_int_convert:
+
+    test r12, r12
+    ; if it's negative, convert it to negative.
+    je .parse_int_return
+
+    not rax
+    add rax, 1
+
     .parse_int_return:
 
     pop rdx
@@ -660,10 +680,12 @@ parse_int:
     pop r15
     pop r15
 
+    pop r12
     pop r13
     pop r14
     pop r15
     pop rsi
+
 
     ret
 
