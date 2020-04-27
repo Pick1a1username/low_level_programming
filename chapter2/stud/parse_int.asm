@@ -1,5 +1,5 @@
 section .data
-        input: db '-1dasda', 0
+        input: db '-eedea', 0
         section .text
         %include "lib.inc"
         global _start 

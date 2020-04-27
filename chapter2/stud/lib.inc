@@ -664,16 +664,26 @@ parse_int:
 
     .parse_int_convert:
 
-    test r12, r12
     ; if it's negative, convert it to negative.
-    je .parse_int_return
+    test r12, r12
+    je .parse_int_add_one_to_length
 
     not rax
     add rax, 1
 
-    .parse_int_return:
+    .parse_int_add_one_to_length:
 
     pop rdx
+
+    ; if it's negative, add 1 to length for the sign
+    test r12, r12
+    je .parse_int_return
+
+    add rdx, 1
+
+
+
+    .parse_int_return:
 
     ; clear stacks for buffer.
     pop r15
