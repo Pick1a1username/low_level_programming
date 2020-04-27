@@ -629,6 +629,26 @@ parse_int:
 
 
     .parse_int_get_number:
+
+    ; if there's no digit, return immediately.
+    test r15, r15
+    jnz .parse_int_loop_get_number_init
+
+    pop r15
+    pop r15
+    pop r15
+
+    pop r12
+    pop r13
+    pop r14
+    pop r15
+    pop rsi
+
+    mov rax, 0
+    mov rdx, 0
+    ret
+
+    .parse_int_loop_get_number_init:
     mov rdx, r15 ; get the length for return
     ; xor r15, r15 ; reset r15
     xor r14, r14 ; reset r14

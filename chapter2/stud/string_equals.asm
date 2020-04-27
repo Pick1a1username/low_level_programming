@@ -1,8 +1,9 @@
 section .data
-        input: db '1', 0
+             str1: db 'ashdb asdhabs dahb',0
+             str2: db 'ashdb asdhabs dahb',0
         section .text
         %include "lib.inc"
-        global _start 
+        global _start
         _start:
         
 mov rdi, -1
@@ -21,8 +22,9 @@ push r13
 push r14 
 push r15 
 
-        mov rdi, input
-        call parse_int
+        mov rdi, str1
+        mov rsi, str2
+        call string_equals
         
 cmp r15, [rsp] 
 jne .convention_error
@@ -60,9 +62,6 @@ err_calling_convention: db "You did not respect the calling convention! Check th
 section .text
 continue:
 
-        push rdx
         mov rdi, rax
-        call print_int
-        pop rdi
         mov rax, 60
         syscall
