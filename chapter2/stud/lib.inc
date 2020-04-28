@@ -81,6 +81,10 @@ print_newline:
     ret
 
 
+; arguments:
+; - rdx: the address of string
+; returns:
+;
 print_uint:
   xor rax, rax
 
@@ -187,6 +191,8 @@ print_uint:
 
 print_int:
   xor rax, rax
+  
+  push r15
 
   ; Get the sign
   push rdi
@@ -206,7 +212,11 @@ print_int:
   ret
 
 .print_int_non_zero_uint:
+  push r11
+  push r12
+  push r13
   push rsi
+
   ; Create a buffer
   mov r11, 0x0000000000000000
   push r11
@@ -247,7 +257,6 @@ print_int:
   pop r11
   pop r13
   pop r14
-  pop rsi
 
 
   push rbx; this will be used for the address storing a digit
@@ -311,6 +320,12 @@ print_int:
   pop r13
   pop r14
   pop rbx
+  pop rsi
+  pop r13
+  pop r12
+  pop r11
+
+  pop r15
 
   ret
 
