@@ -168,145 +168,116 @@ print_uint:
   ret
 
 
-
+; arguments:
+; - rdi: the address of string
+; returns:
+; - rax: the number parsed.
+; - rdx: the length of the number when it is represented by decimal.
 print_int:
   xor rax, rax
-  
-  push r15
-
-  ; Get the sign
-  push rdi
-  shr rdi, 63
-  mov r15, rdi  ; r15 will hold the sign.
-  pop rdi
-  
-
-  ; if the number is zero, print it immediately.
-  cmp rdi, 0
-  jne .print_int_non_zero_uint
-  mov rdi, 0x30
-  push rdi
-  mov rdi, rsp
-  call print_string
-  pop rdi
-  ret
-
-.print_int_non_zero_uint:
+  ; Push some registers to stack which will be used in this function.
   push r11
   push r12
-  push r13
-  push rsi
+  push r13 ; sign
+  push r14 ; temporary character to print
+  push r15 ; counter 
+  push rsi ; The buffer's address
+  push rbx ; This register is used by div instruction.
 
-  ; Create a buffer
-  mov r11, 0x0000000000000000
-  push r11
-  push r11
-  push r11
-  mov rsi, rsp
-  push rax
-  push rbx
+  ; Check whether it's negative.
   push rdi
-  push rdx
+  shr rdi, 63
+  mov r13, rdi 
+  pop rdi
 
-  ; divide the number by 10...
+  ; Create a buffer.
+  push 0
+  push 0
+  push 0
+  mov rsi, rsp ; Get the address of the buffer.
+
+
+  ; Divide the number by 10 in order to convert hexdecimal to decimal.
+  xor r15, r15 ; counter for length?
+  mov rax, rdi ; the number will be divided.
   mov rbx, 10 ; divider
-  mov rax, rdi
+
   ; if the number is negative, remove sign and convert to positive.
-  cmp r15, 0
-  je .print_int_loop_get_decimal_digits
+  test r13, r13
+  jz .print_int_loop_get_digits
   not rax
   add rax, 1
-.print_int_loop_get_decimal_digits:
-  mov rdx, 0 ; reset remainder
+
+.print_int_loop_get_digits:
+  xor rdx, rdx ; reset remainder
   ; https://www.tutorialspoint.com/assembly_programming/assembly_arithmetic_instructions.htm
-  div rbx ; <- Floating point exception (core dumped)
-  ; quotient is stored in rax
-  ; remainder is stored in rdx
-  ; mov [rsi], al ; copy the digit to the buffer
-  mov [rsi], rdx; copy the digit to the buffer
-  inc rsi
+  div rbx ; quotient is stored in rax
+          ; remainder is stored in rdx
+  mov [rsi+r15], rdx; copy the digit to the buffer
   cmp rax, 0
-  je .print_int_print_digits
-  jmp .print_int_loop_get_decimal_digits
+  je .print_int_loop_get_digits_finish
 
-.print_int_print_digits:
-  pop rdx
-  pop rdi
-  pop rbx
-  pop rax
-  pop r11
-  pop r13
-  pop r14
+  inc r15
+  jmp .print_int_loop_get_digits
 
 
-  push rbx; this will be used for the address storing a digit
-
-  ; push digits to stack again
-  push r14
-  push r13
-  push r11
-
-  
+.print_int_loop_get_digits_finish:
+  ; store the length
+  mov rdx, r15
+  inc rdx
 
 
-  ; get the address of the beginning of the pushed digits
-  mov rbx, rsp 
-  mov r12, rsp ; get the one more address of the beginning of the pushed digits
-  add rbx, 24
+  ; Start to print each digit until refering the beginning of the buffer.
 
-  ; Print '-' at first if it's negative
-  cmp r15, 0
-  je .print_int_loop_find_non_zero
 
+  ; if the number is negative, print minus sign at first.
+  test r13, r13
+  jz .print_int_loop_print
+
+  push rsi ; Todo: find why rsi should be backed up when using print_char.
   push rdi
   mov rdi, 0x2d
-  push rdi
-  mov rdi, rsp
-  call print_string
+  call print_char
   pop rdi
-  pop rdi
-  
-  ; get the address of the beginning of the digits(the first non-zero digit)
-.print_int_loop_find_non_zero:
-  cmp byte[rbx], 0    ; if the digit is not zero, start to print
-  jne .print_int_loop_print_digits
-  dec rbx
-  jmp .print_int_loop_find_non_zero
-
-  ; start to print.
-.print_int_loop_print_digits:
-  mov si, 0x30
-  add si, word[rbx]
-
-  push rsi
-  mov rsi, rsp  ; argument #2 in rsi: where does the string start
-  mov rdx, 1  ; argument #3 in rdx: how many bytes to write
-  mov rax, 1  ; system call number should be stored in rax
-  mov rdi, 1  ; argument #1 in rdi: where to write (descriptor)?
-  push rcx
-  syscall
-  pop rcx
   pop rsi
 
-  cmp rbx, r12
-  je .print_int_finish_print_digits
-  dec rbx
-  jmp .print_int_loop_print_digits
+
+.print_int_loop_print:
+  ; Prepare a digit to print
+  mov r14, [rsi+r15]
+  and r14, 0x00000000000000FF
+  add r14, 0x30
+
+  ; Print the digit.
+  push rsi ; Todo: find why rsi should be backed up when using print_char.
+  push rdi
+  mov rdi, r14
+  call print_char
+  pop rdi
+  pop rsi
+  
+  test r15, r15
+  jz .print_int_finish
+
+  dec r15
+  jmp .print_int_loop_print
 
 
-.print_int_finish_print_digits:
-  ; pop rbx
-  pop r11
-  pop r13
-  pop r14
+.print_int_finish:
+  ; Clear the buffer
+  pop rbx
+  pop rbx
+  pop rbx
+  xor rbx, rbx
+
+  ; Pop data in stack to some registers which will be used in this function.
   pop rbx
   pop rsi
+  pop r15
+  pop r14
   pop r13
   pop r12
   pop r11
-
-  pop r15
-
   ret
 
 string_equals:
