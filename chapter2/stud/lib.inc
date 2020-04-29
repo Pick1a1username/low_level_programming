@@ -280,8 +280,50 @@ print_int:
   pop r11
   ret
 
+; arguments:
+; * rdi: string 1
+; * rsi: string 2
+; returns:
+; * rax: 1 if it's equal, 0 if it's not equal
 string_equals:
     xor rax, rax
+    ; Back up some registers.
+    push r15 ; will be used as counter.
+    push r14 ; will be used as temporary container for string 1
+    push r13 ; will be used as temporary container for string 2
+    
+    xor r15, r15
+
+
+.string_equals_loop_compare:
+    mov r14, [rdi+r15]
+    and r14, 0x00000000000000FF
+    mov r13, [rsi+r15]
+    and r13, 0x00000000000000FF
+    
+    cmp r14, r13 ; check whether it's equal.
+    jne .string_equals_not_equal
+
+    test r13, r13 ; check whether it's the end.
+    jz .string_equals_equal
+
+    inc r15
+    jmp .string_equals_loop_compare
+
+    
+.string_equals_equal:
+    mov rax, 1
+    jmp .string_equals_finish
+
+.string_equals_not_equal:
+    mov rax, 0
+    jmp .string_equals_finish
+
+.string_equals_finish:
+    pop r13
+    pop r14
+    pop r15
+
     ret
 
 

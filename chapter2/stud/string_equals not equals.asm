@@ -1,6 +1,6 @@
 section .data
              str1: db 'asd',0
-             str2: db 'asd',0
+             str2: db 'asd!!',0
         section .text
         %include "lib.inc"
         global _start
